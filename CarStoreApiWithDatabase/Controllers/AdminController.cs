@@ -1,5 +1,6 @@
 ﻿using CarStoreApi.Data;
 using CarStoreApi.DTO;
+using CarStoreApiWithDatabase.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -77,6 +78,38 @@ namespace CarStoreApi.Controllers
         {
             List<User> items = _db.Users.ToList();
             return items;
+        }
+
+
+        [HttpGet("GetUserCars")]
+        public ActionResult<List<CarDTO>> getcars(string username)
+        {
+            if (String.IsNullOrEmpty(username))
+            {
+                return BadRequest("Invalid username.");
+            }
+            var user = _db.Users
+                .Include(u=>u.cars)
+                .SingleOrDefault(u =>u.UserName ==  username);
+
+            if (user == null)
+            {
+                return NotFound("User doesn't exist.");
+            }
+            if (!user.IsActive)
+            {
+                return Unauthorized("Please activate the account by changing your default password.");
+            }
+            List<CarDTO> RecommendedCars = [];
+
+            foreach (Car car in user.cars)
+            {
+                RecommendedCars.Add(new CarDTO(){
+                    name = car.Name,
+                    model = car.Model
+                });
+            }
+            return Ok(RecommendedCars);
         }
 
         [HttpGet("GetUser/{Username}")]
@@ -158,6 +191,10 @@ namespace CarStoreApi.Controllers
                 return null;
             }
             User? User = _db.Users.FirstOrDefault(u => u.UserName == Username);
+            if(User == null)
+            {
+                return null;
+            }
             return User;
         }
 
@@ -296,7 +333,7 @@ namespace CarStoreApi.Controllers
         {
             if (rdto.carid == null || rdto.carid < 0)
             {
-                return null;
+                return BadRequest();
             }
 
             User user = GetUser(rdto.username);

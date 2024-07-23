@@ -8,6 +8,13 @@ namespace CarStoreApi.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Car> Cars { get; set; }
 
+        public User GetUserWithCars(int userId)
+        {
+            return Users
+                .Include(u => u.cars) // Include the related cars
+                .FirstOrDefault(u => u.Id == userId);
+        }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,6 +28,8 @@ namespace CarStoreApi.Data
                     new User (2,"amin" , "amin1234" , true)
                     );
 
+
+           
 
             base.OnModelCreating(modelBuilder);
         }
